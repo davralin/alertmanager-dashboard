@@ -1,6 +1,6 @@
 module github.com/davralin/alertmanager-dashboard
 
-go 1.25.12
+go 1.26.5
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
