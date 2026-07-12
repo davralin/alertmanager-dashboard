@@ -1,5 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests"
+  ],
   "dependencyDashboard": true,
-  "lockFileMaintenance": { "enabled": true }
+  "lockFileMaintenance": { "enabled": true },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)go\\.mod$/"],
+      "matchStrings": ["go (?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Update the Go directive and builder image together.",
+      "matchManagers": ["custom.regex", "dockerfile"],
+      "matchDepNames": ["go", "golang"],
+      "groupName": "Go toolchain"
+    },
+    {
+      "description": "Group routine Go module updates.",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Go modules"
+    },
+    {
+      "description": "Group SHA-pinned GitHub Actions updates.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    }
+  ]
 }
