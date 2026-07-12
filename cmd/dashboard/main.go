@@ -20,6 +20,12 @@ import (
 
 var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
 	"label": func(labels map[string]string, key string) string { return labels[key] },
+	"formatTime": func(ts time.Time) string {
+		if ts.IsZero() {
+			return ""
+		}
+		return ts.UTC().Format("2006-01-02 15:04:05 UTC")
+	},
 }).Parse(`<!doctype html>
 <html lang="en">
 <head>
@@ -37,6 +43,7 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
     .pill { border: 1px solid #334155; border-radius: 999px; padding: 0.5rem 0.75rem; background: #111827; }
     .stale { border-color: #f97316; color: #fed7aa; }
     .fresh { border-color: #22c55e; color: #bbf7d0; }
+    .notice { border: 1px solid #f97316; border-radius: 1rem; padding: 1rem; color: #fed7aa; background: #431407; margin-bottom: 1rem; }
     .empty { border: 1px dashed #475569; border-radius: 1rem; padding: 3rem; text-align: center; color: #94a3b8; }
     .alerts { display: grid; gap: 1rem; }
     article { border: 1px solid #334155; border-radius: 1rem; background: linear-gradient(135deg, #111827, #0f172a); padding: 1rem; box-shadow: 0 16px 40px rgb(0 0 0 / 0.25); }
@@ -57,26 +64,28 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
   <header>
     <div>
       <h1>Alerts</h1>
-      <p>Active Alertmanager alerts backed by Valkey.</p>
+      <p>Active Alertmanager alerts.</p>
     </div>
     <div class="summary">
       <span class="pill">Active: {{ len .Alerts }}</span>
-      {{ if .LastPing }}<span class="pill {{ if .LastPingStale }}stale{{ else }}fresh{{ end }}">Last ping: {{ .LastPingAge }} ago</span>{{ else }}<span class="pill stale">No ping received</span>{{ end }}
+      {{ if .LastUpdate }}<span class="pill {{ if .LastUpdateStale }}stale{{ else }}fresh{{ end }}">Last update: {{ .LastUpdateAge }} ago</span>{{ else }}<span class="pill stale">No updates received</span>{{ end }}
       <a class="pill" href="/api/state">JSON</a>
     </div>
   </header>
+  {{ if .LastUpdate }}{{ if .LastUpdateStale }}<section class="notice">No Alertmanager updates have been received recently. Alert data may be stale.</section>{{ end }}{{ else }}<section class="notice">No Alertmanager updates have been received yet.</section>{{ end }}
   {{ if .Alerts }}
     <section class="alerts">
     {{ range .Alerts }}
       <article class="{{ label .Labels "severity" }}">
         <h2>{{ label .Labels "alertname" }}</h2>
         <dl>
-          <dt>Severity</dt><dd>{{ label .Labels "severity" }}</dd>
-          <dt>Namespace</dt><dd>{{ label .Labels "namespace" }}</dd>
-          <dt>Instance</dt><dd>{{ label .Labels "instance" }}</dd>
-          <dt>Summary</dt><dd>{{ label .Annotations "summary" }}</dd>
-          <dt>Description</dt><dd>{{ label .Annotations "description" }}</dd>
-          <dt>Started</dt><dd>{{ .StartsAt }}</dd>
+          {{ with label .Labels "severity" }}<dt>Severity</dt><dd>{{ . }}</dd>{{ end }}
+          {{ with label .Labels "namespace" }}<dt>Namespace</dt><dd>{{ . }}</dd>{{ end }}
+          {{ with label .Labels "instance" }}<dt>Instance</dt><dd>{{ . }}</dd>{{ end }}
+          {{ with label .Annotations "summary" }}<dt>Summary</dt><dd>{{ . }}</dd>{{ end }}
+          {{ with label .Annotations "description" }}<dt>Description</dt><dd>{{ . }}</dd>{{ end }}
+          <dt>Started</dt><dd>{{ formatTime .StartsAt }}</dd>
+          <dt>Updated</dt><dd>{{ formatTime .UpdatedAt }}</dd>
           <dt>Receiver</dt><dd>{{ .Receiver }}</dd>
           <dt>Fingerprint</dt><dd><code>{{ .Fingerprint }}</code></dd>
           {{ if .GeneratorURL }}<dt>Source</dt><dd><a href="{{ .GeneratorURL }}">generator URL</a></dd>{{ end }}
@@ -85,7 +94,7 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
     {{ end }}
     </section>
   {{ else }}
-    <section class="empty">No active alerts.</section>
+    {{ if .LastUpdate }}{{ if .LastUpdateStale }}<section class="empty">No active alerts shown, but alert updates may be stale.</section>{{ else }}<section class="empty">No active alerts.</section>{{ end }}{{ else }}<section class="empty">No alert data received yet.</section>{{ end }}
   {{ end }}
 </main>
 </body>
@@ -138,7 +147,7 @@ func routes(st *store.Store, staleAfter time.Duration) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 		if err := st.Ping(ctx); err != nil {
-			http.Error(w, "valkey unavailable", http.StatusServiceUnavailable)
+			http.Error(w, "state store unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)

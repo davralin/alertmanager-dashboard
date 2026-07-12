@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	lastPingKey = "alertmanager-dashboard:last_ping"
-	alertsKey   = "alertmanager-dashboard:alerts"
+	lastUpdateKey = "alertmanager-dashboard:last_update"
+	alertsKey     = "alertmanager-dashboard:alerts"
 )
 
 type Store struct {
@@ -32,10 +32,10 @@ type Alert struct {
 }
 
 type State struct {
-	LastPing      *time.Time `json:"lastPing"`
-	LastPingAge   string     `json:"lastPingAge"`
-	LastPingStale bool       `json:"lastPingStale"`
-	Alerts        []Alert    `json:"alerts"`
+	LastUpdate      *time.Time `json:"lastUpdate"`
+	LastUpdateAge   string     `json:"lastUpdateAge"`
+	LastUpdateStale bool       `json:"lastUpdateStale"`
+	Alerts          []Alert    `json:"alerts"`
 }
 
 func New(options *redis.Options) *Store {
@@ -52,7 +52,7 @@ func (s *Store) Ping(ctx context.Context) error {
 
 func (s *Store) ApplyWebhook(ctx context.Context, webhook alertmanager.Webhook, now time.Time) error {
 	pipe := s.client.TxPipeline()
-	pipe.Set(ctx, lastPingKey, now.UTC().Format(time.RFC3339Nano), 0)
+	pipe.Set(ctx, lastUpdateKey, now.UTC().Format(time.RFC3339Nano), 0)
 
 	for _, incoming := range webhook.Alerts {
 		fingerprint := incoming.StableFingerprint()
@@ -85,7 +85,7 @@ func (s *Store) ApplyWebhook(ctx context.Context, webhook alertmanager.Webhook, 
 
 func (s *Store) State(ctx context.Context, now time.Time, staleAfter time.Duration) (State, error) {
 	pipe := s.client.Pipeline()
-	lastPingCmd := pipe.Get(ctx, lastPingKey)
+	lastUpdateCmd := pipe.Get(ctx, lastUpdateKey)
 	alertsCmd := pipe.HGetAll(ctx, alertsKey)
 	_, err := pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
@@ -93,16 +93,16 @@ func (s *Store) State(ctx context.Context, now time.Time, staleAfter time.Durati
 	}
 
 	state := State{Alerts: []Alert{}}
-	if lastPingRaw, err := lastPingCmd.Result(); err == nil {
-		lastPing, err := time.Parse(time.RFC3339Nano, lastPingRaw)
+	if lastUpdateRaw, err := lastUpdateCmd.Result(); err == nil {
+		lastUpdate, err := time.Parse(time.RFC3339Nano, lastUpdateRaw)
 		if err == nil {
-			state.LastPing = &lastPing
-			age := now.Sub(lastPing)
+			state.LastUpdate = &lastUpdate
+			age := now.Sub(lastUpdate)
 			if age < 0 {
 				age = 0
 			}
-			state.LastPingAge = age.Round(time.Second).String()
-			state.LastPingStale = age > staleAfter
+			state.LastUpdateAge = age.Round(time.Second).String()
+			state.LastUpdateStale = age > staleAfter
 		}
 	}
 

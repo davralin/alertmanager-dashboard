@@ -67,7 +67,7 @@ func routes(st *store.Store) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 		if err := st.Ping(ctx); err != nil {
-			http.Error(w, "valkey unavailable", http.StatusServiceUnavailable)
+			http.Error(w, "state store unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)

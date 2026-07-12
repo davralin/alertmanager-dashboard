@@ -8,13 +8,13 @@ images:
 - `receiver`: receives Alertmanager webhooks at `POST /webhook` and writes state to Valkey.
 - `dashboard`: reads Valkey and serves the HTML dashboard plus `GET /api/state`.
 
-`Watchdog` webhooks update `last_ping` but are not shown as active alerts.
+`Watchdog` webhooks update the last-update timestamp but are not shown as active alerts.
 
 ## State
 
 Valkey keys:
 
-- `alertmanager-dashboard:last_ping`: RFC3339 timestamp of the last accepted webhook.
+- `alertmanager-dashboard:last_update`: RFC3339 timestamp of the last accepted webhook.
 - `alertmanager-dashboard:alerts`: hash of active alerts keyed by Alertmanager fingerprint.
 
 Resolved alerts are removed from the hash. If Alertmanager does not provide a
@@ -29,7 +29,7 @@ Both binaries use the same environment variables:
 - `VALKEY_USERNAME`: optional Valkey username.
 - `VALKEY_PASSWORD`: optional Valkey password.
 - `VALKEY_DB`: Valkey database number, default `0`.
-- `STALE_AFTER`: dashboard last-ping stale threshold, default `90m`.
+- `STALE_AFTER`: dashboard stale-update threshold, default `90m`.
 - `HEALTHCHECK_URL`: optional override for the container healthcheck URL.
 
 ## Local Development

@@ -33,8 +33,8 @@ func TestApplyWebhookStoresAndResolvesAlerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load state: %v", err)
 	}
-	if state.LastPing == nil || !state.LastPing.Equal(now) {
-		t.Fatalf("last ping = %v, want %v", state.LastPing, now)
+	if state.LastUpdate == nil || !state.LastUpdate.Equal(now) {
+		t.Fatalf("last update = %v, want %v", state.LastUpdate, now)
 	}
 	if len(state.Alerts) != 1 {
 		t.Fatalf("alerts len = %d, want 1", len(state.Alerts))
@@ -58,7 +58,7 @@ func TestApplyWebhookStoresAndResolvesAlerts(t *testing.T) {
 	}
 }
 
-func TestApplyWebhookUsesWatchdogOnlyForLastPing(t *testing.T) {
+func TestApplyWebhookUsesWatchdogOnlyForLastUpdate(t *testing.T) {
 	server := miniredis.RunT(t)
 	st := New(&redis.Options{Addr: server.Addr()})
 	t.Cleanup(func() { _ = st.Close() })
@@ -81,11 +81,11 @@ func TestApplyWebhookUsesWatchdogOnlyForLastPing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load state: %v", err)
 	}
-	if state.LastPing == nil || !state.LastPing.Equal(now) {
-		t.Fatalf("last ping = %v, want %v", state.LastPing, now)
+	if state.LastUpdate == nil || !state.LastUpdate.Equal(now) {
+		t.Fatalf("last update = %v, want %v", state.LastUpdate, now)
 	}
-	if !state.LastPingStale {
-		t.Fatal("last ping should be stale after two hours")
+	if !state.LastUpdateStale {
+		t.Fatal("last update should be stale after two hours")
 	}
 	if len(state.Alerts) != 0 {
 		t.Fatalf("alerts len = %d, want 0", len(state.Alerts))
