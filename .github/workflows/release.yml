@@ -216,15 +216,31 @@ jobs:
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
-  tag:
-    needs: [calver, provenance-receiver, provenance-dashboard]
+  release:
+    needs: [calver, image-receiver, image-dashboard, provenance-receiver, provenance-dashboard]
     if: needs.calver.outputs.exists == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
-      - name: Push CalVer tag
+      - name: Write release notes
         run: |
-          git tag "${{ needs.calver.outputs.tag }}"
-          git push origin "${{ needs.calver.outputs.tag }}"
+          cat > "$RUNNER_TEMP/release-notes.md" <<'EOF'
+          ## Images
+
+          - Receiver: `ghcr.io/${{ github.repository }}-receiver:${{ needs.calver.outputs.tag }}`
+          - Receiver digest: `ghcr.io/${{ github.repository }}-receiver@${{ needs.image-receiver.outputs.digest }}`
+          - Dashboard: `ghcr.io/${{ github.repository }}-dashboard:${{ needs.calver.outputs.tag }}`
+          - Dashboard digest: `ghcr.io/${{ github.repository }}-dashboard@${{ needs.image-dashboard.outputs.digest }}`
+
+          SBOM, build provenance, and SLSA provenance are published with the container images.
+          EOF
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ needs.calver.outputs.tag }}" \
+            --target "$GITHUB_SHA" \
+            --title "${{ needs.calver.outputs.tag }}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
