@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 	"time"
 
@@ -19,7 +20,12 @@ import (
 )
 
 var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
-	"label": func(labels map[string]string, key string) string { return labels[key] },
+	"label":       func(labels map[string]string, key string) string { return labels[key] },
+	"alertLabels": func(labels map[string]string) []keyValue { return selectedPairs(labels, alertLabelOrder) },
+	"alertAnnotations": func(annotations map[string]string) []keyValue {
+		return selectedPairs(annotations, alertAnnotationOrder)
+	},
+	"sortedPairs": sortedPairs,
 	"formatTime": func(ts time.Time) string {
 		if ts.IsZero() {
 			return ""
@@ -54,6 +60,9 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
     dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 0.75rem; margin: 0.75rem 0; }
     dt { color: #94a3b8; }
     dd { margin: 0; word-break: break-word; }
+    details { border-top: 1px solid #1e293b; margin-top: 0.75rem; padding-top: 0.75rem; }
+    summary { color: #bfdbfe; cursor: pointer; }
+    .context { font-size: 0.9rem; }
     a { color: #93c5fd; }
     code { color: #c4b5fd; }
     @media (max-width: 700px) { body { padding: 1rem; } dl { grid-template-columns: 1fr; } dt { margin-top: 0.5rem; } }
@@ -79,17 +88,30 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
       <article class="{{ label .Labels "severity" }}">
         <h2>{{ label .Labels "alertname" }}</h2>
         <dl>
-          {{ with label .Labels "severity" }}<dt>Severity</dt><dd>{{ . }}</dd>{{ end }}
-          {{ with label .Labels "namespace" }}<dt>Namespace</dt><dd>{{ . }}</dd>{{ end }}
-          {{ with label .Labels "instance" }}<dt>Instance</dt><dd>{{ . }}</dd>{{ end }}
-          {{ with label .Annotations "summary" }}<dt>Summary</dt><dd>{{ . }}</dd>{{ end }}
-          {{ with label .Annotations "description" }}<dt>Description</dt><dd>{{ . }}</dd>{{ end }}
+          {{ range alertLabels .Labels }}<dt>{{ .Key }}</dt><dd>{{ .Value }}</dd>{{ end }}
+          {{ range alertAnnotations .Annotations }}<dt>{{ .Key }}</dt><dd>{{ .Value }}</dd>{{ end }}
           <dt>Started</dt><dd>{{ formatTime .StartsAt }}</dd>
           <dt>Updated</dt><dd>{{ formatTime .UpdatedAt }}</dd>
           <dt>Receiver</dt><dd>{{ .Receiver }}</dd>
           <dt>Fingerprint</dt><dd><code>{{ .Fingerprint }}</code></dd>
-          {{ if .GeneratorURL }}<dt>Source</dt><dd><a href="{{ .GeneratorURL }}">generator URL</a></dd>{{ end }}
+          {{ if .GeneratorURL }}<dt>Source</dt><dd><a href="{{ .GeneratorURL }}">Open in Prometheus</a></dd>{{ end }}
         </dl>
+        {{ if .Labels }}
+        <details>
+          <summary>All labels</summary>
+          <dl class="context">
+            {{ range sortedPairs .Labels }}<dt>{{ .Key }}</dt><dd><code>{{ .Value }}</code></dd>{{ end }}
+          </dl>
+        </details>
+        {{ end }}
+        {{ if .Annotations }}
+        <details>
+          <summary>All annotations</summary>
+          <dl class="context">
+            {{ range sortedPairs .Annotations }}<dt>{{ .Key }}</dt><dd>{{ .Value }}</dd>{{ end }}
+          </dl>
+        </details>
+        {{ end }}
       </article>
     {{ end }}
     </section>
@@ -99,6 +121,56 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
 </main>
 </body>
 </html>`))
+
+type keyValue struct {
+	Key   string
+	Value string
+}
+
+var alertLabelOrder = []string{
+	"severity",
+	"namespace",
+	"pod",
+	"job",
+	"service",
+	"container",
+	"endpoint",
+	"instance",
+	"name",
+	"reason",
+	"device",
+}
+
+var alertAnnotationOrder = []string{
+	"summary",
+	"description",
+	"message",
+	"runbook_url",
+}
+
+func selectedPairs(values map[string]string, order []string) []keyValue {
+	pairs := make([]keyValue, 0, len(order))
+	for _, key := range order {
+		if value := values[key]; value != "" {
+			pairs = append(pairs, keyValue{Key: key, Value: value})
+		}
+	}
+	return pairs
+}
+
+func sortedPairs(values map[string]string) []keyValue {
+	pairs := make([]keyValue, 0, len(values))
+	for key, value := range values {
+		if value == "" {
+			continue
+		}
+		pairs = append(pairs, keyValue{Key: key, Value: value})
+	}
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].Key < pairs[j].Key
+	})
+	return pairs
+}
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
