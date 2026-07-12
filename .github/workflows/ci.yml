@@ -30,7 +30,12 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: test -z "$(gofmt -l $(git ls-files '*.go'))"
+      - run: |
+          git ls-files -z '*.go' | xargs -0 -r gofmt -l > /tmp/gofmt.out
+          if [ -s /tmp/gofmt.out ]; then
+            cat /tmp/gofmt.out
+            exit 1
+          fi
       - run: go vet ./...
 
   unit-tests:
