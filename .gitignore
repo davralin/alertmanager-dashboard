@@ -1,0 +1,6 @@
+bin/
+/dashboard
+/receiver
+coverage.out
+dist/
+tmp/

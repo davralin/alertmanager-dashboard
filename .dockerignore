@@ -1,0 +1,10 @@
+.git
+.github
+.cache
+bin
+/dashboard
+/receiver
+coverage.out
+dist
+tmp
+*.log

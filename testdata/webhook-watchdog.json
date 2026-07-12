@@ -1,0 +1,32 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"Watchdog\"}",
+  "status": "firing",
+  "receiver": "dashboard",
+  "groupLabels": {
+    "alertname": "Watchdog"
+  },
+  "commonLabels": {
+    "alertname": "Watchdog"
+  },
+  "commonAnnotations": {
+    "summary": "heartbeat"
+  },
+  "externalURL": "https://alertmanager.example.invalid",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "Watchdog",
+        "severity": "none"
+      },
+      "annotations": {
+        "summary": "heartbeat"
+      },
+      "startsAt": "2026-07-12T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "https://prometheus.example.invalid/graph?g0.expr=vector(1)",
+      "fingerprint": "watchdog"
+    }
+  ]
+}
