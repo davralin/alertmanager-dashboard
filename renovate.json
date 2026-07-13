@@ -34,6 +34,12 @@
       "description": "Group SHA-pinned GitHub Actions updates.",
       "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions"
+    },
+    {
+      "description": "SLSA generator must stay tag-pinned for verifier-compatible OIDC claims.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["slsa-framework/slsa-github-generator"],
+      "pinDigests": false
     }
   ]
 }

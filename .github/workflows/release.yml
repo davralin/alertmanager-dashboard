@@ -190,7 +190,7 @@ jobs:
     # Pinned by tag rather than commit SHA: the generator embeds the workflow ref
     # in the provenance certificate and slsa-verifier expects a versioned tag in
     # the OIDC claims. Pinning by SHA breaks that verification.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
     with:
       image: ghcr.io/${{ github.repository }}-receiver
       digest: ${{ needs.image-receiver.outputs.digest }}
@@ -208,7 +208,7 @@ jobs:
     # Pinned by tag rather than commit SHA: the generator embeds the workflow ref
     # in the provenance certificate and slsa-verifier expects a versioned tag in
     # the OIDC claims. Pinning by SHA breaks that verification.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
     with:
       image: ghcr.io/${{ github.repository }}-dashboard
       digest: ${{ needs.image-dashboard.outputs.digest }}
