@@ -5,6 +5,10 @@
     "docker:pinDigests",
     "helpers:pinGitHubActionDigests"
   ],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
   "lockFileMaintenance": { "enabled": true },
   "customManagers": [
