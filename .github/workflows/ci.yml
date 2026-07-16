@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload Containerfile SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9  # v4
+        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4
         with:
           sarif_file: trivy-config-${{ matrix.component }}.sarif
           category: trivy-config-${{ matrix.component }}
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload image SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9  # v4
+        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4
         with:
           sarif_file: trivy-image-${{ matrix.component }}.sarif
           category: trivy-image-${{ matrix.component }}
