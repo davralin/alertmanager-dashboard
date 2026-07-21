@@ -85,7 +85,7 @@ jobs:
           output: trivy-image-receiver.sarif
       - name: Upload image SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4
+        uses: github/codeql-action/upload-sarif@e0647621c2984b5ed2f768cb892365bf2a616ad1  # v4
         with:
           sarif_file: trivy-image-receiver.sarif
           category: trivy-image-receiver
@@ -148,7 +148,7 @@ jobs:
           output: trivy-image-dashboard.sarif
       - name: Upload image SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4
+        uses: github/codeql-action/upload-sarif@e0647621c2984b5ed2f768cb892365bf2a616ad1  # v4
         with:
           sarif_file: trivy-image-dashboard.sarif
           category: trivy-image-dashboard
@@ -175,7 +175,7 @@ jobs:
           output: trivy-config.sarif
       - name: Upload Containerfile SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4
+        uses: github/codeql-action/upload-sarif@e0647621c2984b5ed2f768cb892365bf2a616ad1  # v4
         with:
           sarif_file: trivy-config.sarif
           category: trivy-config
