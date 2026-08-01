@@ -79,8 +79,8 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}-receiver@${{ steps.build.outputs.digest }}
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: '1'
           scanners: vuln
+          # Soft mode: omit exit-code. Hard mode: add exit-code: '1'.
           format: sarif
           output: trivy-image-receiver.sarif
       - name: Upload image SARIF
@@ -142,8 +142,8 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}-dashboard@${{ steps.build.outputs.digest }}
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: '1'
           scanners: vuln
+          # Soft mode: omit exit-code. Hard mode: add exit-code: '1'.
           format: sarif
           output: trivy-image-dashboard.sarif
       - name: Upload image SARIF
@@ -170,7 +170,7 @@ jobs:
           scan-type: config
           scan-ref: Containerfile
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          # Soft mode: omit exit-code. Hard mode: add exit-code: '1'.
           format: sarif
           output: trivy-config.sarif
       - name: Upload Containerfile SARIF

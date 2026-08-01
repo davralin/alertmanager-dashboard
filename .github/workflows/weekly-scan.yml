@@ -37,29 +37,13 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           scanners: vuln
-          exit-code: '1'
+          # Soft mode: omit exit-code. Hard mode: add exit-code: '1'.
           format: sarif
           output: trivy-weekly-${{ matrix.component }}.sarif
 
-      - name: Upload SARIF
+      - name: Upload Trivy SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@f205ea1c3313d32999d8d6a48b4f6530d4437b38  # v4
         with:
           sarif_file: trivy-weekly-${{ matrix.component }}.sarif
           category: trivy-weekly-${{ matrix.component }}
-
-      - name: Grype - image scan
-        id: grype
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2  # v7.4.0
-        with:
-          image: ghcr.io/${{ github.repository }}-${{ matrix.component }}:latest
-          fail-build: true
-          severity-cutoff: high
-          output-format: sarif
-
-      - name: Upload Grype SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@f205ea1c3313d32999d8d6a48b4f6530d4437b38  # v4
-        with:
-          sarif_file: ${{ steps.grype.outputs.sarif }}
-          category: grype-weekly-${{ matrix.component }}

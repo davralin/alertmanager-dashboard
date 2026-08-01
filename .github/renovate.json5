@@ -1,0 +1,145 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  extends: [
+    'config:recommended',
+    'docker:pinDigests',
+    'docker:enableMajor',
+    'helpers:pinGitHubActionDigests',
+  ],
+
+  dependencyDashboard: true,
+  dependencyDashboardTitle: 'Renovate Dashboard',
+  rebaseWhen: 'conflicted',
+  automergeStrategy: 'rebase',
+
+  lockFileMaintenance: {
+    enabled: true,
+    automerge: true,
+    automergeType: 'pr',
+  },
+
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/(^|/)go\\.mod$/'],
+      matchStrings: ['go (?<currentValue>\\d+\\.\\d+\\.\\d+)'],
+      depNameTemplate: 'go',
+      datasourceTemplate: 'golang-version',
+      versioningTemplate: 'semver',
+    },
+  ],
+
+  packageRules: [
+    {
+      description: 'Auto-merge non-breaking updates',
+      matchUpdateTypes: ['digest', 'pinDigest', 'patch', 'minor'],
+      automerge: true,
+      automergeType: 'pr',
+    },
+    {
+      description: 'Major updates require review',
+      matchUpdateTypes: ['major'],
+      automerge: false,
+    },
+    {
+      description: 'Update the Go directive and builder image together',
+      matchManagers: ['custom.regex', 'dockerfile'],
+      matchDepNames: ['go', 'golang'],
+      groupName: 'Go toolchain',
+    },
+    {
+      description: 'Group routine Go module updates',
+      matchManagers: ['gomod'],
+      matchUpdateTypes: ['minor', 'patch'],
+      groupName: 'Go modules',
+      commitMessagePrefix: 'fix(deps): ',
+    },
+    {
+      description: 'Go module major updates',
+      matchManagers: ['gomod'],
+      matchUpdateTypes: ['major'],
+      commitMessagePrefix: 'feat(deps)!: ',
+    },
+    {
+      description: 'Container major updates',
+      matchDatasources: ['docker'],
+      matchUpdateTypes: ['major'],
+      commitMessagePrefix: 'feat(container)!: ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'Container minor updates',
+      matchDatasources: ['docker'],
+      matchUpdateTypes: ['minor'],
+      commitMessagePrefix: 'feat(container): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'Container patch updates',
+      matchDatasources: ['docker'],
+      matchUpdateTypes: ['patch'],
+      commitMessagePrefix: 'fix(container): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'Container digest updates',
+      matchDatasources: ['docker'],
+      matchUpdateTypes: ['digest', 'pinDigest'],
+      commitMessagePrefix: 'chore(container): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentDigestShort}} -> {{newDigestShort}} )',
+    },
+    {
+      description: 'Group SHA-pinned GitHub Actions updates',
+      matchManagers: ['github-actions'],
+      groupName: 'GitHub Actions',
+    },
+    {
+      description: 'GitHub Actions major updates',
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['major'],
+      commitMessagePrefix: 'feat(github-action)!: ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'GitHub Actions minor updates',
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['minor'],
+      commitMessagePrefix: 'feat(github-action): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'GitHub Actions patch updates',
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['patch'],
+      commitMessagePrefix: 'fix(github-action): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentVersion}} -> {{newVersion}} )',
+    },
+    {
+      description: 'GitHub Actions digest updates',
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['digest'],
+      commitMessagePrefix: 'chore(github-action): ',
+      commitMessageTopic: '{{depName}}',
+      commitMessageExtra: '( {{currentDigestShort}} -> {{newDigestShort}} )',
+    },
+    {
+      description: 'pre-commit hook updates',
+      matchManagers: ['pre-commit'],
+      commitMessagePrefix: 'chore(pre-commit): ',
+    },
+    {
+      description: 'SLSA generator must stay tag-pinned for verifier-compatible OIDC claims',
+      matchManagers: ['github-actions'],
+      matchPackageNames: ['slsa-framework/slsa-github-generator'],
+      pinDigests: false,
+    },
+  ],
+}
