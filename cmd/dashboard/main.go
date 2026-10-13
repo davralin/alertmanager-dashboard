@@ -73,6 +73,7 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
   <header>
     <div>
       <h1>Alerts</h1>
+      {{ if .DisplayName }}<p>Hello, {{ .DisplayName }}{{ if .Username }} ({{ .Username }}){{ end }}</p>{{ else if .Username }}<p>Hello, {{ .Username }}</p>{{ end }}
       <p>Active Alertmanager alerts.</p>
     </div>
     <div class="summary">
@@ -125,6 +126,12 @@ var page = template.Must(template.New("dashboard").Funcs(template.FuncMap{
 type keyValue struct {
 	Key   string
 	Value string
+}
+
+type dashboardPageData struct {
+	store.State
+	DisplayName string
+	Username    string
 }
 
 var alertLabelOrder = []string{
@@ -244,7 +251,11 @@ func dashboardHandler(st *store.Store, staleAfter time.Duration) http.HandlerFun
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := page.Execute(w, state); err != nil {
+		if err := page.Execute(w, dashboardPageData{
+			State:       state,
+			DisplayName: r.Header.Get("X-Forwarded-User"),
+			Username:    r.Header.Get("X-Forwarded-Preferred-Username"),
+		}); err != nil {
 			slog.Error("failed to render dashboard", "error", err)
 		}
 	}

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -38,5 +40,44 @@ func TestSortedPairsSortsAndSkipsEmptyValues(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("sortedPairs() = %#v, want %#v", got, want)
+	}
+}
+
+func TestPageRendersOIDCGreeting(t *testing.T) {
+	var output bytes.Buffer
+	if err := page.Execute(&output, dashboardPageData{
+		DisplayName: "John Doe",
+		Username:    "jdoe",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(output.String(), "Hello, John Doe (jdoe)") {
+		t.Fatalf("page did not contain OIDC greeting: %s", output.String())
+	}
+}
+
+func TestPageOmitsGreetingWithoutOIDCIdentity(t *testing.T) {
+	var output bytes.Buffer
+	if err := page.Execute(&output, dashboardPageData{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(output.String(), "Hello,") {
+		t.Fatalf("page unexpectedly contained OIDC greeting: %s", output.String())
+	}
+}
+
+func TestPageEscapesOIDCIdentity(t *testing.T) {
+	var output bytes.Buffer
+	if err := page.Execute(&output, dashboardPageData{
+		DisplayName: "<John Doe>",
+		Username:    "jdoe&admin",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(output.String(), "Hello, &lt;John Doe&gt; (jdoe&amp;admin)") {
+		t.Fatalf("page did not escape OIDC greeting: %s", output.String())
 	}
 }
