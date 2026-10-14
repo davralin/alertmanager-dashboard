@@ -253,7 +253,7 @@ func dashboardHandler(st *store.Store, staleAfter time.Duration) http.HandlerFun
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := page.Execute(w, dashboardPageData{
 			State:       state,
-			DisplayName: r.Header.Get("X-Forwarded-User"),
+			DisplayName: r.Header.Get("X-Forwarded-Email"),
 			Username:    r.Header.Get("X-Forwarded-Preferred-Username"),
 		}); err != nil {
 			slog.Error("failed to render dashboard", "error", err)
